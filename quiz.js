@@ -147,7 +147,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if (n === 6) setupPriceReveal();
   }
 
+  // Single-select steps auto-advance after a short delay so the user sees their
+  // choice highlight before moving on. That delay is cancellable — if "Voltar" is
+  // tapped in that window, the pending auto-advance must not fire afterwards and
+  // silently undo the back navigation.
+  let advanceTimer = null;
+  function scheduleAdvance(delay = 280) {
+    clearTimeout(advanceTimer);
+    advanceTimer = setTimeout(goNext, delay);
+  }
+
   function goNext() {
+    clearTimeout(advanceTimer);
     if (currentStep < totalSteps) {
       currentStep++;
       showStep(currentStep);
@@ -155,6 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function goBack() {
+    clearTimeout(advanceTimer);
     if (currentStep > 1) {
       currentStep--;
       showStep(currentStep);
@@ -184,7 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         roofAccessField.style.display = 'none';
         answers.roof_access = null;
-        setTimeout(goNext, 280);
+        scheduleAdvance();
       }
     });
   });
@@ -193,7 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
       roofAccessField.querySelectorAll('.quiz-option').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
       answers.roof_access = btn.dataset.value;
-      setTimeout(goNext, 280);
+      scheduleAdvance();
     });
   });
 
@@ -341,7 +353,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // auto-advance single-select steps, except call_preference which sits above contact fields
         if (field !== 'call_preference') {
-          setTimeout(goNext, 280);
+          scheduleAdvance();
         }
       });
     });
