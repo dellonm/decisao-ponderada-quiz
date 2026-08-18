@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Simulação Solar Gratuita | Decisão Ponderada</title>
-<meta name="description" content="Descubra em 2 minutos se a sua casa ou negócio está pronto para energia solar. Simulação gratuita e sem compromisso.">
+<meta name="description" content="Descubra em 2 minutos o sistema solar certo para a sua casa ou negócio, veja a faixa de preço estimada e agende uma avaliação gratuita.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>☀️</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,8 +32,8 @@
 
     <div class="quiz-intro reveal-up in" id="quizIntro">
       <div class="eyebrow center"><span class="dot"></span> Simulação gratuita · 2 minutos</div>
-      <h1 class="quiz-title">Descubra se a sua casa está pronta para energia solar</h1>
-      <p class="quiz-sub">Responda a 7 perguntas rápidas e a nossa equipa prepara uma proposta à sua medida — sem compromisso.</p>
+      <h1 class="quiz-title">Descubra o sistema solar certo para si — e o preço</h1>
+      <p class="quiz-sub">Responda a algumas perguntas rápidas sobre a sua casa ou negócio. No final mostramos-lhe uma faixa de preço real, à medida do que precisa.</p>
       <div class="quiz-urgency">
         <span class="pulse-dot"></span>
         As vagas de instalação para este trimestre são limitadas — quanto mais cedo o seu pedido entrar na fila, mais cedo instalamos.
@@ -41,7 +41,7 @@
       <button class="btn btn-primary btn-lg" id="startQuiz">Começar Simulação →</button>
       <div class="quiz-trust">
         <span>✓ Sem compromisso</span>
-        <span>✓ Resposta em 24h</span>
+        <span>✓ Vê logo a faixa de preço</span>
         <span>✓ 100% gratuito</span>
       </div>
     </div>
@@ -49,12 +49,12 @@
     <form id="quizForm" class="quiz-form" style="display:none;">
       <div class="quiz-progress">
         <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="progressFill"></div></div>
-        <div class="quiz-progress-label"><span id="stepLabel">Passo 1 de 8</span></div>
+        <div class="quiz-progress-label"><span id="stepLabel">Passo 1 de 11</span></div>
       </div>
 
       <!-- Step 1: Tipo de imóvel -->
       <div class="quiz-step" data-step="1">
-        <h2>O sistema solar é para...</h2>
+        <h2>Isto é para...</h2>
         <p class="quiz-step-sub">Isto ajuda-nos a dimensionar corretamente o sistema.</p>
         <div class="quiz-options" data-field="property_type">
           <button type="button" class="quiz-option" data-value="Residencial"><span class="quiz-option-icon">🏠</span><span>Habitação Residencial</span></button>
@@ -62,21 +62,94 @@
         </div>
       </div>
 
-      <!-- Step 2: Orçamento -->
+      <!-- Step 2: Objetivo principal -->
       <div class="quiz-step" data-step="2">
-        <h2>Qual o orçamento que tem disponível?</h2>
-        <p class="quiz-step-sub">Uma estimativa é suficiente — ajustamos a proposta ao valor real do seu consumo.</p>
-        <div class="quiz-options quiz-options-list" data-field="budget">
-          <button type="button" class="quiz-option" data-value="Ate 3.000E">Até 3.000€</button>
-          <button type="button" class="quiz-option" data-value="3.000E - 6.000E">3.000€ – 6.000€</button>
-          <button type="button" class="quiz-option" data-value="6.000E - 10.000E">6.000€ – 10.000€</button>
-          <button type="button" class="quiz-option" data-value="Mais de 10.000E">Mais de 10.000€</button>
-          <button type="button" class="quiz-option" data-value="Ainda nao sei / preciso de simulacao">Ainda não sei — preciso de uma simulação</button>
+        <h2>O que procura resolver?</h2>
+        <p class="quiz-step-sub">Cada objetivo tem uma solução diferente — queremos perceber o seu.</p>
+        <div class="quiz-options quiz-options-list" data-field="goal">
+          <button type="button" class="quiz-option" data-value="Reduzir fatura"><span class="quiz-option-icon">⚡</span><span>Reduzir a fatura da eletricidade</span></button>
+          <button type="button" class="quiz-option" data-value="Backup/reserva de energia"><span class="quiz-option-icon">🔋</span><span>Ter energia de reserva em cortes de luz</span></button>
+          <button type="button" class="quiz-option" data-value="Agua quente"><span class="quiz-option-icon">🚿</span><span>Só preciso de resolver a água quente</span></button>
+          <button type="button" class="quiz-option" data-value="Independencia total da rede"><span class="quiz-option-icon">🌞</span><span>Independência quase total da rede elétrica</span></button>
+          <button type="button" class="quiz-option" data-value="Ainda nao sei"><span class="quiz-option-icon">🤔</span><span>Ainda não sei, quero perceber as opções</span></button>
         </div>
       </div>
 
-      <!-- Step 3: Morada -->
+      <!-- Step 3: Capacidade — conteúdo varia consoante as respostas anteriores -->
       <div class="quiz-step" data-step="3">
+        <h2 id="capTitle">O que tem em casa?</h2>
+        <p class="quiz-step-sub" id="capSub">Só o essencial — isto dá-nos uma ideia rápida do seu consumo.</p>
+
+        <!-- Água quente: só tamanho do agregado -->
+        <div id="capWater" style="display:none;">
+          <div class="quiz-field">
+            <label>Quantas pessoas vivem em casa?</label>
+            <div class="quiz-options" data-field="household" data-scope="water">
+              <button type="button" class="quiz-option" data-value="1-2 pessoas">1–2 pessoas</button>
+              <button type="button" class="quiz-option" data-value="3-4 pessoas">3–4 pessoas</button>
+              <button type="button" class="quiz-option" data-value="5+ pessoas">5+ pessoas</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Residencial: frigoríficos + equipamentos + agregado -->
+        <div id="capResidential" style="display:none;">
+          <div class="quiz-field">
+            <label>Quantos frigoríficos tem?</label>
+            <div class="stepper" id="fridgeStepper">
+              <button type="button" class="stepper-btn" data-dir="-1">−</button>
+              <span class="stepper-value" id="fridgeValue">1</span>
+              <button type="button" class="stepper-btn" data-dir="1">+</button>
+            </div>
+          </div>
+          <div class="quiz-field">
+            <label>O que mais tem em casa? (opcional)</label>
+            <div class="quiz-options quiz-chips" data-field="appliances" data-multi="true" data-scope="residential">
+              <button type="button" class="quiz-option quiz-chip" data-value="Ar Condicionado">❄️ Ar Condicionado</button>
+              <button type="button" class="quiz-option quiz-chip" data-value="Termoacumulador Eletrico">🚿 Termoacumulador Elétrico</button>
+              <button type="button" class="quiz-option quiz-chip" data-value="Piscina">🏊 Piscina</button>
+              <button type="button" class="quiz-option quiz-chip" data-value="Carro Eletrico">🚗 Carro Elétrico</button>
+              <button type="button" class="quiz-option quiz-chip" data-value="Maquina Lavar/Secar">🧺 Máquina Lavar/Secar</button>
+              <button type="button" class="quiz-option quiz-chip" data-value="Arca Congeladora">🧊 Arca Congeladora</button>
+            </div>
+          </div>
+          <div class="quiz-field">
+            <label>Quantas pessoas vivem em casa?</label>
+            <div class="quiz-options" data-field="household" data-scope="residential">
+              <button type="button" class="quiz-option" data-value="1-2 pessoas">1–2 pessoas</button>
+              <button type="button" class="quiz-option" data-value="3-4 pessoas">3–4 pessoas</button>
+              <button type="button" class="quiz-option" data-value="5+ pessoas">5+ pessoas</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Comercial: equipamentos + dimensão do negócio -->
+        <div id="capCommercial" style="display:none;">
+          <div class="quiz-field">
+            <label>Quais equipamentos têm maior consumo? (opcional)</label>
+            <div class="quiz-options quiz-chips" data-field="appliances" data-multi="true" data-scope="commercial">
+              <button type="button" class="quiz-option quiz-chip" data-value="Camaras Frigorificas">🧊 Câmaras Frigoríficas</button>
+              <button type="button" class="quiz-option quiz-chip" data-value="Climatizacao Comercial">❄️ Climatização</button>
+              <button type="button" class="quiz-option quiz-chip" data-value="Maquinaria">⚙️ Maquinaria</button>
+              <button type="button" class="quiz-option quiz-chip" data-value="Iluminacao Intensiva">💡 Iluminação Intensiva</button>
+              <button type="button" class="quiz-option quiz-chip" data-value="Equipamento Informatico">🖥️ Equipamento Informático</button>
+            </div>
+          </div>
+          <div class="quiz-field">
+            <label>Dimensão do negócio</label>
+            <div class="quiz-options" data-field="household" data-scope="commercial">
+              <button type="button" class="quiz-option" data-value="Pequeno negocio (1-5)">Pequeno (1–5 pessoas)</button>
+              <button type="button" class="quiz-option" data-value="Medio negocio (5-20)">Médio (5–20 pessoas)</button>
+              <button type="button" class="quiz-option" data-value="Grande negocio (20+)">Grande (20+ pessoas)</button>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-primary btn-lg quiz-next" id="capNext">Continuar →</button>
+      </div>
+
+      <!-- Step 4: Morada -->
+      <div class="quiz-step" data-step="4">
         <h2>Onde fica o imóvel?</h2>
         <p class="quiz-step-sub">Precisamos da morada completa para validar a exposição solar e a viabilidade técnica.</p>
         <div class="quiz-field">
@@ -90,10 +163,10 @@
         <button type="button" class="btn btn-primary btn-lg quiz-next">Continuar →</button>
       </div>
 
-      <!-- Step 4: Fatura -->
-      <div class="quiz-step" data-step="4">
+      <!-- Step 5: Fatura -->
+      <div class="quiz-step" data-step="5">
         <h2>Quanto paga, em média, de eletricidade por mês?</h2>
-        <p class="quiz-step-sub">Quanto mais alta a fatura, maior a poupança potencial com energia solar.</p>
+        <p class="quiz-step-sub">Quanto mais alta a fatura, maior a poupança potencial — e mais precisa esta estimativa.</p>
         <div class="quiz-field">
           <label for="current_bill">Valor médio mensal (€)</label>
           <input type="text" id="current_bill" name="current_bill" placeholder="Ex: 120€" inputmode="decimal">
@@ -101,8 +174,33 @@
         <button type="button" class="btn btn-primary btn-lg quiz-next">Continuar →</button>
       </div>
 
-      <!-- Step 5: Prazo -->
-      <div class="quiz-step" data-step="5">
+      <!-- Step 6: Faixa de preço (informativo) -->
+      <div class="quiz-step" data-step="6">
+        <div class="price-reveal">
+          <div class="eyebrow center"><span class="dot"></span> Estimativa para o seu perfil</div>
+          <div class="price-tier" id="priceTier">Médio</div>
+          <div class="price-range" id="priceRange">3.000€ – 5.600€</div>
+          <p class="price-explain" id="priceExplain">Este é o intervalo típico de investimento para o perfil que descreveu, incluindo painéis, inversor e bateria de lítio.</p>
+          <p class="price-disclaimer">O valor final depende de uma avaliação técnica gratuita à sua morada — isto é apenas um ponto de partida.</p>
+        </div>
+        <button type="button" class="btn btn-primary btn-lg full quiz-next">Já percebi, continuar →</button>
+      </div>
+
+      <!-- Step 7: Orçamento -->
+      <div class="quiz-step" data-step="7">
+        <h2>Tendo em conta essa faixa, qual o orçamento que tem disponível?</h2>
+        <p class="quiz-step-sub">Uma estimativa é suficiente — ajustamos a proposta ao valor real.</p>
+        <div class="quiz-options quiz-options-list" data-field="budget">
+          <button type="button" class="quiz-option" data-value="Ate 3.000E">Até 3.000€</button>
+          <button type="button" class="quiz-option" data-value="3.000E - 6.000E">3.000€ – 6.000€</button>
+          <button type="button" class="quiz-option" data-value="6.000E - 10.000E">6.000€ – 10.000€</button>
+          <button type="button" class="quiz-option" data-value="Mais de 10.000E">Mais de 10.000€</button>
+          <button type="button" class="quiz-option" data-value="Ainda nao sei / preciso de simulacao">Ainda não sei — preciso de uma simulação</button>
+        </div>
+      </div>
+
+      <!-- Step 8: Prazo -->
+      <div class="quiz-step" data-step="8">
         <h2>Para quando quer ter o sistema instalado?</h2>
         <p class="quiz-step-sub">Isto determina a prioridade do seu pedido na nossa agenda de instalações.</p>
         <div class="quiz-options quiz-options-list" data-field="timeline">
@@ -113,8 +211,8 @@
         </div>
       </div>
 
-      <!-- Step 6: Proprietário -->
-      <div class="quiz-step" data-step="6">
+      <!-- Step 9: Proprietário -->
+      <div class="quiz-step" data-step="9">
         <h2>É proprietário(a) do imóvel?</h2>
         <p class="quiz-step-sub">A instalação solar requer autorização do proprietário.</p>
         <div class="quiz-options" data-field="owner">
@@ -124,8 +222,8 @@
         </div>
       </div>
 
-      <!-- Step 7: Motivação -->
-      <div class="quiz-step" data-step="7">
+      <!-- Step 10: Motivação -->
+      <div class="quiz-step" data-step="10">
         <h2>O que o(a) faz querer avançar agora?</h2>
         <p class="quiz-step-sub">Pode escolher mais do que uma opção.</p>
         <div class="quiz-options quiz-options-list quiz-multi" data-field="motivations" data-multi="true">
@@ -143,10 +241,19 @@
         <button type="button" class="btn btn-primary btn-lg quiz-next">Continuar →</button>
       </div>
 
-      <!-- Step 8: Contacto -->
-      <div class="quiz-step" data-step="8">
-        <h2>Falta só uma coisa — para onde enviamos a proposta?</h2>
-        <p class="quiz-step-sub" id="urgencyRecap">Depois de submeter, um elemento da nossa equipa vai enviar-lhe uma mensagem e um email para agendar uma chamada rápida e recolher os últimos detalhes.</p>
+      <!-- Step 11: Chamada + Contacto -->
+      <div class="quiz-step" data-step="11">
+        <h2>Falta só uma coisa — vamos agendar a sua chamada de avaliação</h2>
+        <p class="quiz-step-sub">Um elemento da nossa equipa liga-lhe para confirmar os detalhes e, se fizer sentido avançar, marcamos também a visita técnica ao local.</p>
+        <div class="quiz-field">
+          <label>Quando prefere receber a nossa chamada?</label>
+          <div class="quiz-options quiz-options-list" data-field="call_preference">
+            <button type="button" class="quiz-option" data-value="Manha">🌅 Manhã (9h–13h)</button>
+            <button type="button" class="quiz-option" data-value="Tarde">🌤️ Tarde (14h–18h)</button>
+            <button type="button" class="quiz-option" data-value="Fim do dia">🌙 Fim do dia (18h–20h)</button>
+            <button type="button" class="quiz-option" data-value="Qualquer altura">🕐 Qualquer altura</button>
+          </div>
+        </div>
         <div class="quiz-field">
           <label for="qname">Nome</label>
           <input type="text" id="qname" name="name" placeholder="O seu nome" required>
@@ -159,7 +266,7 @@
           <label for="qemail">Email</label>
           <input type="email" id="qemail" name="email" placeholder="oseuemail@exemplo.pt" required>
         </div>
-        <button type="submit" class="btn btn-primary btn-lg full" id="submitQuiz">Receber a Minha Proposta →</button>
+        <button type="submit" class="btn btn-primary btn-lg full" id="submitQuiz">Agendar a Minha Chamada →</button>
         <p class="quiz-disclaimer">Ao submeter, aceita ser contactado pela nossa equipa (mensagem, email ou chamada) sobre este pedido.</p>
       </div>
 
@@ -171,7 +278,7 @@
     <div class="quiz-success" id="quizSuccess" style="display:none;">
       <div class="quiz-success-icon">✓</div>
       <h2>Pedido recebido!</h2>
-      <p id="successMessage">Obrigado! Um elemento da nossa equipa vai enviar-lhe uma <strong>mensagem</strong> e um <strong>email</strong> nas próximas horas para agendar uma chamada rápida e recolher os últimos detalhes do seu projeto.</p>
+      <p id="successMessage">Obrigado! Um elemento da nossa equipa vai enviar-lhe uma <strong>mensagem</strong> e um <strong>email</strong> na sua janela preferida para agendar a chamada de avaliação. Se decidir avançar, marcamos também a visita técnica ao local.</p>
       <div class="quiz-urgency" style="margin-top:24px;">
         <span class="pulse-dot"></span>
         Guarde o telemóvel e o email por perto — é assim que vamos marcar a sua chamada.
