@@ -1,7 +1,7 @@
 // Tailored lead-qualification quiz — Decisão Ponderada
-// Step 2 asks what the lead needs mapped 1:1 to the real product catalog (kits,
-// batteries, inverters, EV chargers, mounting structures) — step 3 then asks a
-// couple of quick, category-specific qualifying questions instead of a generic form.
+// Step 2 asks what the lead needs mapped 1:1 to the real product catalog. Step 3
+// asks a couple of professional, strategic qualifying questions per category —
+// consumption pattern and critical-load autonomy needs, not appliance counts.
 // Posts to the n8n webhook, which re-derives price ranges from the real catalog
 // bands server-side and writes to the Notion CRM.
 
@@ -16,35 +16,45 @@ if (glow) {
 }
 
 // ---- Price estimate — mirrors the n8n "Validate + Score Lead" Code node exactly ----
-// Ranges are pulled from the real catalog price bands (see products-data.js on the main site).
 function computeEstimate(a) {
+  const noRoofAccess = a.property_type === 'Apartamento' && a.roof_access === 'Sem acesso';
+
   if (a.interest === 'Inversor') {
     return { tier: 'Inversor', range: '877€ – 1.163€ (inversores híbridos Deye, 3kW a 5kW)' };
   }
   if (a.interest === 'Carregador EV') {
     return { tier: 'Carregador EV', range: '549€ – 1.199€ (carregadores wallbox 7.4kW a 22kW)' };
   }
-  if (a.interest === 'Estrutura') {
+  if (a.interest === 'Estrutura' && !noRoofAccess) {
     return { tier: 'Estrutura', range: '189€ – 219€ (estrutura de fixação, por conjunto)' };
   }
   if (a.interest === 'Bateria') {
     return { tier: 'Personalizado', range: '3.000€ – 9.900€ (consoante a capacidade e o sistema existente)' };
   }
+  if (noRoofAccess) {
+    return { tier: 'Personalizado', range: 'Sem telhado/terraço próprio — avaliamos alternativas (bateria, carregador EV) após contacto' };
+  }
   if (a.property_type === 'Comercial' && a.household === 'Grande negocio (20+)') {
     return { tier: 'Personalizado', range: 'Dimensionamento à medida' };
   }
-  // Kit Solar Completo / Ainda não sei — estimate from appliance/household/bill signals
-  let score = 0;
-  const fridgesNum = a.fridges === '3+' ? 3 : (parseInt(a.fridges, 10) || 0);
-  score += Math.min(fridgesNum, 2);
 
-  const weights = a.property_type === 'Comercial'
-    ? { 'Camaras Frigorificas': 2, 'Climatizacao Comercial': 2, 'Maquinaria': 2, 'Iluminacao Intensiva': 1, 'Equipamento Informatico': 1 }
-    : { 'Ar Condicionado': 2, 'Termoacumulador Eletrico': 1, 'Piscina': 2, 'Carro Eletrico': 2, 'Maquina Lavar/Secar': 1, 'Arca Congeladora': 1 };
-  (a.appliances || []).forEach(x => { score += weights[x] || 0; });
+  // Kit Solar Completo / Ainda não sei — estimate from consumption pattern + autonomy + household + bill
+  let score = 0;
+  const autonomyCount = (a.autonomy_needs || []).filter(x => x !== 'Nao precisa de autonomia').length;
+  score += Math.min(autonomyCount, 3);
+
+  if (a.consumption_pattern === 'Ao fim do dia e noite') score += 2;
+  else if (a.consumption_pattern === 'Distribuido ao longo do dia') score += 1;
 
   const householdWeights = { '1-2 pessoas': 0, '3-4 pessoas': 1, '5+ pessoas': 2, 'Pequeno negocio (1-5)': 0, 'Medio negocio (5-20)': 2, 'Grande negocio (20+)': 4 };
   score += householdWeights[a.household] || 0;
+
+  if (a.property_type === 'Comercial') {
+    const weights = { 'Camaras Frigorificas': 2, 'Climatizacao Comercial': 2, 'Maquinaria': 2, 'Iluminacao Intensiva': 1, 'Equipamento Informatico': 1 };
+    (a.appliances || []).forEach(x => { score += weights[x] || 0; });
+  }
+
+  if (a.ev_interest === 'Ja tenho' || a.ev_interest === 'Vou comprar em breve') score += 2;
 
   const billNum = parseFloat((a.current_bill || '').replace(/[^0-9.,]/g, '').replace(',', '.')) || 0;
   if (billNum > 150) score += 2;
@@ -89,10 +99,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const answers = {
     property_type: null,
+    roof_access: null,
     interest: null,
-    fridges: '1',
     appliances: [],
     household: null,
+    consumption_pattern: null,
+    autonomy_needs: [],
+    ev_interest: null,
     battery_has_panels: null,
     battery_inverter_brand: null,
     inverter_reason: null,
@@ -129,6 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
     backBtn.style.visibility = n === 1 ? 'hidden' : 'visible';
     window.scrollTo({ top: form.offsetTop - 100, behavior: 'smooth' });
 
+    if (n === 2) setupInterestStep();
     if (n === 3) setupCapacityStep();
     if (n === 6) setupPriceReveal();
   }
@@ -155,10 +169,58 @@ document.addEventListener('DOMContentLoaded', () => {
 
   backBtn.addEventListener('click', goBack);
 
+  // ---- Step 1: property type + conditional roof-access follow-up for apartments ----
+  const roofAccessField = document.getElementById('roofAccessField');
+  const step1Group = form.querySelector('.quiz-step[data-step="1"] [data-field="property_type"]');
+  step1Group.querySelectorAll('.quiz-option').forEach(btn => {
+    btn.addEventListener('click', () => {
+      step1Group.querySelectorAll('.quiz-option').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      answers.property_type = btn.dataset.value;
+
+      if (btn.dataset.value === 'Apartamento') {
+        roofAccessField.style.display = 'block';
+        roofAccessField.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      } else {
+        roofAccessField.style.display = 'none';
+        answers.roof_access = null;
+        setTimeout(goNext, 280);
+      }
+    });
+  });
+  roofAccessField.querySelectorAll('.quiz-option').forEach(btn => {
+    btn.addEventListener('click', () => {
+      roofAccessField.querySelectorAll('.quiz-option').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      answers.roof_access = btn.dataset.value;
+      setTimeout(goNext, 280);
+    });
+  });
+
+  // ---- Step 2: gray out options that don't fit an apartment with no roof access ----
+  const interestGroup = form.querySelector('.quiz-step[data-step="2"] [data-field="interest"]');
+  const interestNote = document.createElement('p');
+  interestNote.className = 'quiz-step-sub';
+  interestNote.style.marginTop = '14px';
+  interestNote.style.display = 'none';
+  interestGroup.insertAdjacentElement('afterend', interestNote);
+
+  function setupInterestStep() {
+    const noRoofAccess = answers.property_type === 'Apartamento' && answers.roof_access === 'Sem acesso';
+    const restricted = ['Kit Solar Completo', 'Estrutura'];
+    interestGroup.querySelectorAll('.quiz-option').forEach(btn => {
+      const isRestricted = noRoofAccess && restricted.includes(btn.dataset.value);
+      btn.disabled = isRestricted;
+      btn.classList.toggle('quiz-option-disabled', isRestricted);
+    });
+    interestNote.style.display = noRoofAccess ? 'block' : 'none';
+    interestNote.textContent = noRoofAccess
+      ? 'Como não tem telhado ou terraço próprio, um kit completo ou estrutura de fixação exigem autorização do condomínio — mas pode avançar com uma bateria, um carregador ou pedir-nos uma recomendação.'
+      : '';
+  }
+
   // ---- Step 3: branch by product interest ----
   const capPanels = {
-    'Kit Solar Completo': null, // resolved to residential/commercial below
-    'Ainda nao sei': null,
     'Bateria': document.getElementById('capBattery'),
     'Inversor': document.getElementById('capInverter'),
     'Carregador EV': document.getElementById('capCharger'),
@@ -171,7 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const capSub = document.getElementById('capSub');
 
   const CAP_COPY = {
-    'Bateria': { title: 'Só mais duas perguntas rápidas', sub: 'Isto ajuda-nos a perceber a compatibilidade com o seu sistema atual.' },
+    'Bateria': { title: 'Só mais três perguntas rápidas', sub: 'Isto ajuda-nos a perceber a compatibilidade com o seu sistema atual.' },
     'Inversor': { title: 'Vamos perceber o seu sistema', sub: 'Duas perguntas rápidas sobre o inversor que precisa.' },
     'Carregador EV': { title: 'Vamos escolher o carregador certo', sub: 'Duas perguntas rápidas sobre o carregamento do seu carro.' },
     'Estrutura': { title: 'Vamos perceber a instalação', sub: 'Duas perguntas rápidas sobre a cobertura e o número de painéis.' }
@@ -195,25 +257,13 @@ document.addEventListener('DOMContentLoaded', () => {
       capTitle.textContent = copy.title;
       capSub.textContent = copy.sub;
     } else if (answers.property_type === 'Comercial') {
-      capTitle.textContent = 'O que tem no seu negócio?';
-      capSub.textContent = 'Só o essencial — isto dá-nos uma ideia rápida do consumo.';
+      capTitle.textContent = 'Vamos perceber o seu negócio';
+      capSub.textContent = 'Perguntas estratégicas para dimensionar o sistema certo.';
     } else {
-      capTitle.textContent = 'O que tem em casa?';
-      capSub.textContent = 'Só o essencial — isto dá-nos uma ideia rápida do seu consumo.';
+      capTitle.textContent = 'Vamos perceber o seu consumo';
+      capSub.textContent = 'Perguntas estratégicas para dimensionar o sistema certo — nada de contagens.';
     }
   }
-
-  // fridge stepper
-  const fridgeStepper = document.getElementById('fridgeStepper');
-  const fridgeValue = document.getElementById('fridgeValue');
-  let fridgeCount = 1;
-  fridgeStepper.querySelectorAll('.stepper-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const dir = parseInt(btn.dataset.dir, 10);
-      fridgeCount = Math.max(0, Math.min(4, fridgeCount + dir));
-      fridgeValue.textContent = fridgeCount >= 4 ? '3+' : String(fridgeCount);
-    });
-  });
 
   // selections inside step 3 (scoped to whichever panel is visible; single/multi)
   form.querySelectorAll('.quiz-step[data-step="3"] .quiz-options').forEach(group => {
@@ -247,12 +297,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    if (panel === capResidential) {
-      answers.fridges = fridgeCount >= 4 ? '3+' : String(fridgeCount);
-    } else {
-      answers.fridges = '0';
-    }
-
     if (missing) {
       missing.classList.add('shake');
       setTimeout(() => missing.classList.remove('shake'), 400);
@@ -270,13 +314,14 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('priceExplain').textContent = INTEREST_EXPLAIN[answers.interest] || INTEREST_EXPLAIN['Ainda nao sei'];
   }
 
-  // ---- Generic single/multi-select option buttons (steps 1, 2, 7, 8, 9, 10, 11) ----
-  form.querySelectorAll('.quiz-step:not([data-step="3"]) .quiz-options').forEach(group => {
+  // ---- Generic single/multi-select option buttons (steps 2, 7, 8, 9, 10, 11) ----
+  form.querySelectorAll('.quiz-step:not([data-step="1"]):not([data-step="3"]) .quiz-options').forEach(group => {
     const field = group.dataset.field;
     const isMulti = group.dataset.multi === 'true';
 
     group.querySelectorAll('.quiz-option').forEach(btn => {
       btn.addEventListener('click', () => {
+        if (btn.disabled) return;
         const value = btn.dataset.value;
 
         if (isMulti) {

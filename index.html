@@ -56,9 +56,18 @@
       <div class="quiz-step" data-step="1">
         <h2>Isto é para...</h2>
         <p class="quiz-step-sub">Isto ajuda-nos a dimensionar corretamente o sistema.</p>
-        <div class="quiz-options" data-field="property_type">
-          <button type="button" class="quiz-option" data-value="Residencial"><span class="quiz-option-icon">🏠</span><span>Habitação Residencial</span></button>
-          <button type="button" class="quiz-option" data-value="Comercial"><span class="quiz-option-icon">🏢</span><span>Negócio / Comercial</span></button>
+        <div class="quiz-options quiz-options-list" data-field="property_type">
+          <button type="button" class="quiz-option" data-value="Moradia"><span class="quiz-option-icon">🏠</span><span>Moradia</span></button>
+          <button type="button" class="quiz-option" data-value="Apartamento"><span class="quiz-option-icon">🏢</span><span>Apartamento</span></button>
+          <button type="button" class="quiz-option" data-value="Comercial"><span class="quiz-option-icon">🏭</span><span>Negócio ou Comercial</span></button>
+        </div>
+        <div class="quiz-field" id="roofAccessField" style="display:none;">
+          <label>Tem acesso a um telhado, terraço ou cobertura próprios?</label>
+          <div class="quiz-options quiz-options-list" data-field="roof_access">
+            <button type="button" class="quiz-option" data-value="Proprio">Sim, tenho acesso próprio</button>
+            <button type="button" class="quiz-option" data-value="Partilhado com condominio">É partilhado com o condomínio</button>
+            <button type="button" class="quiz-option" data-value="Sem acesso">Não tenho, mas tenho interesse noutras soluções</button>
+          </div>
         </div>
       </div>
 
@@ -96,6 +105,17 @@
               <button type="button" class="quiz-option" data-value="Deye">Deye</button>
               <button type="button" class="quiz-option" data-value="Outra marca">Outra marca</button>
               <button type="button" class="quiz-option" data-value="Nao sei">Não sei</button>
+            </div>
+          </div>
+          <div class="quiz-field">
+            <label>O que precisa de continuar a funcionar durante um corte de energia? (opcional)</label>
+            <div class="quiz-options quiz-chips" data-field="autonomy_needs" data-multi="true">
+              <button type="button" class="quiz-option quiz-chip" data-value="Conservacao de alimentos">🧊 Conservação de alimentos</button>
+              <button type="button" class="quiz-option quiz-chip" data-value="Equipamento medico">🏥 Equipamento médico</button>
+              <button type="button" class="quiz-option quiz-chip" data-value="Trabalho remoto">💻 Trabalho remoto</button>
+              <button type="button" class="quiz-option quiz-chip" data-value="Bomba de agua">💧 Bomba de água / furo</button>
+              <button type="button" class="quiz-option quiz-chip" data-value="Seguranca">🔒 Segurança / alarme</button>
+              <button type="button" class="quiz-option quiz-chip" data-value="Nao precisa de autonomia">Não preciso de autonomia</button>
             </div>
           </div>
         </div>
@@ -164,25 +184,34 @@
           </div>
         </div>
 
-        <!-- Residencial: frigoríficos + equipamentos + agregado -->
+        <!-- Residencial (Moradia ou Apartamento com acesso): padrão de consumo + autonomia + veículo elétrico + agregado -->
         <div id="capResidential" style="display:none;">
           <div class="quiz-field">
-            <label>Quantos frigoríficos tem?</label>
-            <div class="stepper" id="fridgeStepper">
-              <button type="button" class="stepper-btn" data-dir="-1">−</button>
-              <span class="stepper-value" id="fridgeValue">1</span>
-              <button type="button" class="stepper-btn" data-dir="1">+</button>
+            <label>Quando consome mais eletricidade?</label>
+            <div class="quiz-options quiz-options-list" data-field="consumption_pattern">
+              <button type="button" class="quiz-option" data-value="Durante o dia">☀️ Durante o dia (trabalho a partir de casa, negócio ativo de dia)</button>
+              <button type="button" class="quiz-option" data-value="Ao fim do dia e noite">🌙 Ao fim do dia e à noite (fora de casa durante o dia)</button>
+              <button type="button" class="quiz-option" data-value="Distribuido ao longo do dia">🔄 Distribuído ao longo do dia</button>
             </div>
           </div>
           <div class="quiz-field">
-            <label>O que mais tem em casa? (opcional)</label>
-            <div class="quiz-options quiz-chips" data-field="appliances" data-multi="true" data-scope="residential">
-              <button type="button" class="quiz-option quiz-chip" data-value="Ar Condicionado">❄️ Ar Condicionado</button>
-              <button type="button" class="quiz-option quiz-chip" data-value="Termoacumulador Eletrico">🚿 Termoacumulador Elétrico</button>
-              <button type="button" class="quiz-option quiz-chip" data-value="Piscina">🏊 Piscina</button>
-              <button type="button" class="quiz-option quiz-chip" data-value="Carro Eletrico">🚗 Carro Elétrico</button>
-              <button type="button" class="quiz-option quiz-chip" data-value="Maquina Lavar/Secar">🧺 Máquina Lavar/Secar</button>
-              <button type="button" class="quiz-option quiz-chip" data-value="Arca Congeladora">🧊 Arca Congeladora</button>
+            <label>O que precisa de continuar a funcionar durante um corte de energia? (opcional)</label>
+            <div class="quiz-options quiz-chips" data-field="autonomy_needs" data-multi="true">
+              <button type="button" class="quiz-option quiz-chip" data-value="Conservacao de alimentos">🧊 Conservação de alimentos</button>
+              <button type="button" class="quiz-option quiz-chip" data-value="Equipamento medico">🏥 Equipamento médico</button>
+              <button type="button" class="quiz-option quiz-chip" data-value="Trabalho remoto">💻 Trabalho remoto</button>
+              <button type="button" class="quiz-option quiz-chip" data-value="Bomba de agua">💧 Bomba de água / furo</button>
+              <button type="button" class="quiz-option quiz-chip" data-value="Seguranca">🔒 Segurança / alarme</button>
+              <button type="button" class="quiz-option quiz-chip" data-value="Nao precisa de autonomia">Não preciso de autonomia</button>
+            </div>
+          </div>
+          <div class="quiz-field">
+            <label>Tem ou está a planear ter um veículo elétrico?</label>
+            <div class="quiz-options" data-field="ev_interest" data-scope="residential">
+              <button type="button" class="quiz-option" data-value="Ja tenho">Já tenho</button>
+              <button type="button" class="quiz-option" data-value="Vou comprar em breve">Vou comprar em breve</button>
+              <button type="button" class="quiz-option" data-value="Nao">Não</button>
+              <button type="button" class="quiz-option" data-value="Talvez no futuro">Talvez no futuro</button>
             </div>
           </div>
           <div class="quiz-field">
@@ -195,16 +224,25 @@
           </div>
         </div>
 
-        <!-- Comercial: equipamentos + dimensão do negócio -->
+        <!-- Comercial: tipos de equipamento + frota elétrica + dimensão do negócio -->
         <div id="capCommercial" style="display:none;">
           <div class="quiz-field">
-            <label>Quais equipamentos têm maior consumo? (opcional)</label>
+            <label>Que tipos de equipamento têm maior consumo? (opcional)</label>
             <div class="quiz-options quiz-chips" data-field="appliances" data-multi="true" data-scope="commercial">
               <button type="button" class="quiz-option quiz-chip" data-value="Camaras Frigorificas">🧊 Câmaras Frigoríficas</button>
               <button type="button" class="quiz-option quiz-chip" data-value="Climatizacao Comercial">❄️ Climatização</button>
               <button type="button" class="quiz-option quiz-chip" data-value="Maquinaria">⚙️ Maquinaria</button>
               <button type="button" class="quiz-option quiz-chip" data-value="Iluminacao Intensiva">💡 Iluminação Intensiva</button>
               <button type="button" class="quiz-option quiz-chip" data-value="Equipamento Informatico">🖥️ Equipamento Informático</button>
+            </div>
+          </div>
+          <div class="quiz-field">
+            <label>Tem ou planeia ter veículos elétricos na frota?</label>
+            <div class="quiz-options" data-field="ev_interest" data-scope="commercial">
+              <button type="button" class="quiz-option" data-value="Ja tenho">Já tenho</button>
+              <button type="button" class="quiz-option" data-value="Vou comprar em breve">Vou comprar em breve</button>
+              <button type="button" class="quiz-option" data-value="Nao">Não</button>
+              <button type="button" class="quiz-option" data-value="Talvez no futuro">Talvez no futuro</button>
             </div>
           </div>
           <div class="quiz-field">
