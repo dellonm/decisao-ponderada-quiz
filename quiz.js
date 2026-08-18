@@ -1,7 +1,9 @@
 // Tailored lead-qualification quiz — Decisão Ponderada
-// Branches by property type + goal, estimates a price tier client-side (mirrored
-// server-side in n8n as the source of truth), then books a call preference.
-// Posts to the n8n webhook, which validates, re-derives the tier/score and writes to the Notion CRM.
+// Step 2 asks what the lead needs mapped 1:1 to the real product catalog (kits,
+// batteries, inverters, EV chargers, mounting structures) — step 3 then asks a
+// couple of quick, category-specific qualifying questions instead of a generic form.
+// Posts to the n8n webhook, which re-derives price ranges from the real catalog
+// bands server-side and writes to the Notion CRM.
 
 const QUIZ_WEBHOOK_URL = "https://backend.automationbig8agency.com/webhook/decisao-ponderada-quiz";
 
@@ -13,14 +15,25 @@ if (glow) {
   }, { passive: true });
 }
 
-// ---- Price tier estimate — mirrors the n8n "Validate + Score Lead" Code node exactly ----
-function computeTier(a) {
-  if (a.goal === 'Agua quente') {
-    return { tier: 'Personalizado', range: 'Orçamento específico após avaliação' };
+// ---- Price estimate — mirrors the n8n "Validate + Score Lead" Code node exactly ----
+// Ranges are pulled from the real catalog price bands (see products-data.js on the main site).
+function computeEstimate(a) {
+  if (a.interest === 'Inversor') {
+    return { tier: 'Inversor', range: '877€ – 1.163€ (inversores híbridos Deye, 3kW a 5kW)' };
+  }
+  if (a.interest === 'Carregador EV') {
+    return { tier: 'Carregador EV', range: '549€ – 1.199€ (carregadores wallbox 7.4kW a 22kW)' };
+  }
+  if (a.interest === 'Estrutura') {
+    return { tier: 'Estrutura', range: '189€ – 219€ (estrutura de fixação, por conjunto)' };
+  }
+  if (a.interest === 'Bateria') {
+    return { tier: 'Personalizado', range: '3.000€ – 9.900€ (consoante a capacidade e o sistema existente)' };
   }
   if (a.property_type === 'Comercial' && a.household === 'Grande negocio (20+)') {
     return { tier: 'Personalizado', range: 'Dimensionamento à medida' };
   }
+  // Kit Solar Completo / Ainda não sei — estimate from appliance/household/bill signals
   let score = 0;
   const fridgesNum = a.fridges === '3+' ? 3 : (parseInt(a.fridges, 10) || 0);
   score += Math.min(fridgesNum, 2);
@@ -37,23 +50,24 @@ function computeTier(a) {
   if (billNum > 150) score += 2;
   else if (billNum > 100) score += 1;
 
-  if (a.goal === 'Independencia total da rede') score += 2;
-
-  if (score <= 2) return { tier: 'Pequeno', range: '3.200€ – 3.800€' };
-  if (score <= 6) return { tier: 'Medio', range: '3.000€ – 5.600€' };
-  return { tier: 'Grande', range: '5.000€ – 9.900€' };
+  if (score <= 2) return { tier: 'Pequeno', range: '3.200€ – 3.800€ (kits ~12 kWh/dia)' };
+  if (score <= 6) return { tier: 'Medio', range: '3.000€ – 5.600€ (kits ~20 kWh/dia)' };
+  return { tier: 'Grande', range: '5.000€ – 9.900€ (kits ~30 kWh/dia)' };
 }
 
-const TIER_LABEL = { Pequeno: 'Perfil Pequeno', Medio: 'Perfil Médio', Grande: 'Perfil Grande', Personalizado: 'Perfil Personalizado' };
-
-const GOAL_EXPLAIN = {
-  'Reduzir fatura': 'Este é o intervalo típico de investimento para reduzir significativamente a sua fatura, incluindo painéis, inversor e bateria de lítio.',
-  'Backup/reserva de energia': 'Este intervalo já conta com uma bateria com capacidade suficiente para lhe dar energia de reserva em cortes de luz.',
-  'Independencia total da rede': 'Para independência quase total da rede, este intervalo inclui produção e armazenamento reforçados.',
-  'Ainda nao sei': 'Este é o intervalo típico para o perfil que descreveu — a nossa equipa ajuda-o a decidir a opção certa na chamada de avaliação.',
-  'Agua quente': 'Como o seu objetivo é a água quente, este tipo de solução foge ao catálogo standard de kits fotovoltaicos — a nossa equipa prepara um orçamento específico após a avaliação.'
+const TIER_LABEL = {
+  Pequeno: 'Perfil Pequeno', Medio: 'Perfil Médio', Grande: 'Perfil Grande',
+  Personalizado: 'Sob Medida', Inversor: 'Inversor', 'Carregador EV': 'Carregador EV', Estrutura: 'Estrutura'
 };
-const COMMERCIAL_LARGE_EXPLAIN = 'Negócios desta dimensão normalmente precisam de um dimensionamento à medida — preparamos um orçamento específico após a avaliação técnica.';
+
+const INTEREST_EXPLAIN = {
+  'Kit Solar Completo': 'Este é o intervalo típico de investimento para um kit completo — painéis, inversor e bateria de lítio — ajustado ao que descreveu.',
+  'Ainda nao sei': 'Este é o intervalo típico para o perfil que descreveu — a nossa equipa ajuda-o a escolher a opção certa na chamada de avaliação.',
+  'Bateria': 'A bateria certa depende do sistema solar que já tem instalado — este é o intervalo típico consoante a capacidade necessária.',
+  'Inversor': 'Preço de catálogo para os nossos inversores híbridos Deye, consoante a potência do seu sistema.',
+  'Carregador EV': 'Preço de catálogo para os nossos carregadores wallbox, consoante a velocidade de carregamento pretendida.',
+  'Estrutura': 'Preço por conjunto de estrutura de fixação, consoante o tipo de cobertura.'
+};
 
 document.addEventListener('DOMContentLoaded', () => {
   const yearEl = document.getElementById('year');
@@ -75,10 +89,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const answers = {
     property_type: null,
-    goal: null,
+    interest: null,
     fridges: '1',
     appliances: [],
     household: null,
+    battery_has_panels: null,
+    battery_inverter_brand: null,
+    inverter_reason: null,
+    inverter_power: null,
+    charger_type: null,
+    charger_has_solar: null,
+    structure_roof_type: null,
+    structure_panel_count: null,
     address: '',
     concelho: '',
     current_bill: '',
@@ -93,8 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
     phone: '',
     email: '',
     campaign: '',
-    ad: '',
-    shown_range: ''
+    ad: ''
   };
 
   const params = new URLSearchParams(location.search);
@@ -134,25 +155,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
   backBtn.addEventListener('click', goBack);
 
-  // ---- Step 3: branch by goal + property type ----
-  const capWater = document.getElementById('capWater');
+  // ---- Step 3: branch by product interest ----
+  const capPanels = {
+    'Kit Solar Completo': null, // resolved to residential/commercial below
+    'Ainda nao sei': null,
+    'Bateria': document.getElementById('capBattery'),
+    'Inversor': document.getElementById('capInverter'),
+    'Carregador EV': document.getElementById('capCharger'),
+    'Estrutura': document.getElementById('capStructure')
+  };
   const capResidential = document.getElementById('capResidential');
   const capCommercial = document.getElementById('capCommercial');
+  const allCapPanels = [capPanels['Bateria'], capPanels['Inversor'], capPanels['Carregador EV'], capPanels['Estrutura'], capResidential, capCommercial];
   const capTitle = document.getElementById('capTitle');
   const capSub = document.getElementById('capSub');
 
+  const CAP_COPY = {
+    'Bateria': { title: 'Só mais duas perguntas rápidas', sub: 'Isto ajuda-nos a perceber a compatibilidade com o seu sistema atual.' },
+    'Inversor': { title: 'Vamos perceber o seu sistema', sub: 'Duas perguntas rápidas sobre o inversor que precisa.' },
+    'Carregador EV': { title: 'Vamos escolher o carregador certo', sub: 'Duas perguntas rápidas sobre o carregamento do seu carro.' },
+    'Estrutura': { title: 'Vamos perceber a instalação', sub: 'Duas perguntas rápidas sobre a cobertura e o número de painéis.' }
+  };
+
+  function activeCapPanel() {
+    if (answers.interest === 'Bateria') return capPanels['Bateria'];
+    if (answers.interest === 'Inversor') return capPanels['Inversor'];
+    if (answers.interest === 'Carregador EV') return capPanels['Carregador EV'];
+    if (answers.interest === 'Estrutura') return capPanels['Estrutura'];
+    return answers.property_type === 'Comercial' ? capCommercial : capResidential;
+  }
+
   function setupCapacityStep() {
-    [capWater, capResidential, capCommercial].forEach(el => el.style.display = 'none');
-    if (answers.goal === 'Agua quente') {
-      capWater.style.display = 'block';
-      capTitle.textContent = 'Só mais uma pergunta rápida';
-      capSub.textContent = 'Isto ajuda-nos a perceber a dimensão da solução de água quente.';
+    allCapPanels.forEach(el => el.style.display = 'none');
+    const panel = activeCapPanel();
+    panel.style.display = 'block';
+
+    const copy = CAP_COPY[answers.interest];
+    if (copy) {
+      capTitle.textContent = copy.title;
+      capSub.textContent = copy.sub;
     } else if (answers.property_type === 'Comercial') {
-      capCommercial.style.display = 'block';
       capTitle.textContent = 'O que tem no seu negócio?';
       capSub.textContent = 'Só o essencial — isto dá-nos uma ideia rápida do consumo.';
     } else {
-      capResidential.style.display = 'block';
       capTitle.textContent = 'O que tem em casa?';
       capSub.textContent = 'Só o essencial — isto dá-nos uma ideia rápida do seu consumo.';
     }
@@ -170,9 +215,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // household + appliance selections inside step 3 (scoped, single/multi)
-  form.querySelectorAll('#capWater .quiz-options, #capResidential .quiz-options, #capCommercial .quiz-options').forEach(group => {
-    const field = group.dataset.field;
+  // selections inside step 3 (scoped to whichever panel is visible; single/multi)
+  form.querySelectorAll('.quiz-step[data-step="3"] .quiz-options').forEach(group => {
     const isMulti = group.dataset.multi === 'true';
     group.querySelectorAll('.quiz-option').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -187,44 +231,43 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('capNext').addEventListener('click', () => {
-    let activePanel, householdField;
-    if (answers.goal === 'Agua quente') {
-      activePanel = capWater;
-      answers.fridges = '0';
-      answers.appliances = [];
-    } else if (answers.property_type === 'Comercial') {
-      activePanel = capCommercial;
-      answers.fridges = '0';
-      answers.appliances = Array.from(activePanel.querySelectorAll('.quiz-chip.selected')).map(b => b.dataset.value);
-    } else {
-      activePanel = capResidential;
+    const panel = activeCapPanel();
+    const groups = panel.querySelectorAll('[data-field]');
+    let missing = null;
+
+    groups.forEach(group => {
+      const field = group.dataset.field;
+      const isMulti = group.dataset.multi === 'true';
+      if (isMulti) {
+        answers[field] = Array.from(group.querySelectorAll('.quiz-option.selected')).map(b => b.dataset.value);
+      } else {
+        const selected = group.querySelector('.quiz-option.selected');
+        if (!selected && !missing) missing = group;
+        answers[field] = selected ? selected.dataset.value : null;
+      }
+    });
+
+    if (panel === capResidential) {
       answers.fridges = fridgeCount >= 4 ? '3+' : String(fridgeCount);
-      answers.appliances = Array.from(activePanel.querySelectorAll('.quiz-chip.selected')).map(b => b.dataset.value);
+    } else {
+      answers.fridges = '0';
     }
 
-    const householdBtn = activePanel.querySelector('[data-field="household"] .quiz-option.selected');
-    if (!householdBtn) {
-      const householdGroup = activePanel.querySelector('[data-field="household"]');
-      householdGroup.classList.add('shake');
-      setTimeout(() => householdGroup.classList.remove('shake'), 400);
+    if (missing) {
+      missing.classList.add('shake');
+      setTimeout(() => missing.classList.remove('shake'), 400);
       return;
     }
-    answers.household = householdBtn.dataset.value;
     goNext();
   });
 
   // ---- Step 6: price reveal ----
   function setupPriceReveal() {
-    const { tier, range } = computeTier(answers);
+    const { tier, range } = computeEstimate(answers);
     answers.shown_range = range;
     document.getElementById('priceTier').textContent = TIER_LABEL[tier] || tier;
     document.getElementById('priceRange').textContent = range;
-    const explainEl = document.getElementById('priceExplain');
-    if (answers.property_type === 'Comercial' && answers.household === 'Grande negocio (20+)' && answers.goal !== 'Agua quente') {
-      explainEl.textContent = COMMERCIAL_LARGE_EXPLAIN;
-    } else {
-      explainEl.textContent = GOAL_EXPLAIN[answers.goal] || GOAL_EXPLAIN['Ainda nao sei'];
-    }
+    document.getElementById('priceExplain').textContent = INTEREST_EXPLAIN[answers.interest] || INTEREST_EXPLAIN['Ainda nao sei'];
   }
 
   // ---- Generic single/multi-select option buttons (steps 1, 2, 7, 8, 9, 10, 11) ----

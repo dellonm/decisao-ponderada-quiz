@@ -62,16 +62,17 @@
         </div>
       </div>
 
-      <!-- Step 2: Objetivo principal -->
+      <!-- Step 2: O que procura, mapeado diretamente ao que vendemos -->
       <div class="quiz-step" data-step="2">
-        <h2>O que procura resolver?</h2>
-        <p class="quiz-step-sub">Cada objetivo tem uma solução diferente — queremos perceber o seu.</p>
-        <div class="quiz-options quiz-options-list" data-field="goal">
-          <button type="button" class="quiz-option" data-value="Reduzir fatura"><span class="quiz-option-icon">⚡</span><span>Reduzir a fatura da eletricidade</span></button>
-          <button type="button" class="quiz-option" data-value="Backup/reserva de energia"><span class="quiz-option-icon">🔋</span><span>Ter energia de reserva em cortes de luz</span></button>
-          <button type="button" class="quiz-option" data-value="Agua quente"><span class="quiz-option-icon">🚿</span><span>Só preciso de resolver a água quente</span></button>
-          <button type="button" class="quiz-option" data-value="Independencia total da rede"><span class="quiz-option-icon">🌞</span><span>Independência quase total da rede elétrica</span></button>
-          <button type="button" class="quiz-option" data-value="Ainda nao sei"><span class="quiz-option-icon">🤔</span><span>Ainda não sei, quero perceber as opções</span></button>
+        <h2>O que está a precisar?</h2>
+        <p class="quiz-step-sub">Estas são as soluções que temos disponíveis — escolha a que mais se aproxima.</p>
+        <div class="quiz-options quiz-options-list" data-field="interest">
+          <button type="button" class="quiz-option" data-value="Kit Solar Completo"><span class="quiz-option-icon">☀️</span><span>Kit Solar Completo (painéis + inversor + bateria)</span></button>
+          <button type="button" class="quiz-option" data-value="Bateria"><span class="quiz-option-icon">🔋</span><span>Já tenho painéis, quero mais bateria/armazenamento</span></button>
+          <button type="button" class="quiz-option" data-value="Inversor"><span class="quiz-option-icon">⚡</span><span>Preciso de trocar ou adicionar um inversor</span></button>
+          <button type="button" class="quiz-option" data-value="Carregador EV"><span class="quiz-option-icon">🚗</span><span>Um carregador para o meu carro elétrico</span></button>
+          <button type="button" class="quiz-option" data-value="Estrutura"><span class="quiz-option-icon">🔧</span><span>Estrutura de fixação para painéis novos</span></button>
+          <button type="button" class="quiz-option" data-value="Ainda nao sei"><span class="quiz-option-icon">🤔</span><span>Ainda não sei — quero uma recomendação</span></button>
         </div>
       </div>
 
@@ -80,14 +81,85 @@
         <h2 id="capTitle">O que tem em casa?</h2>
         <p class="quiz-step-sub" id="capSub">Só o essencial — isto dá-nos uma ideia rápida do seu consumo.</p>
 
-        <!-- Água quente: só tamanho do agregado -->
-        <div id="capWater" style="display:none;">
+        <!-- Bateria: já tem painéis? que inversor tem? -->
+        <div id="capBattery" style="display:none;">
           <div class="quiz-field">
-            <label>Quantas pessoas vivem em casa?</label>
-            <div class="quiz-options" data-field="household" data-scope="water">
-              <button type="button" class="quiz-option" data-value="1-2 pessoas">1–2 pessoas</button>
-              <button type="button" class="quiz-option" data-value="3-4 pessoas">3–4 pessoas</button>
-              <button type="button" class="quiz-option" data-value="5+ pessoas">5+ pessoas</button>
+            <label>Já tem painéis solares instalados?</label>
+            <div class="quiz-options" data-field="battery_has_panels">
+              <button type="button" class="quiz-option" data-value="Sim">Sim</button>
+              <button type="button" class="quiz-option" data-value="Nao">Não</button>
+            </div>
+          </div>
+          <div class="quiz-field">
+            <label>Que inversor tem atualmente?</label>
+            <div class="quiz-options" data-field="battery_inverter_brand">
+              <button type="button" class="quiz-option" data-value="Deye">Deye</button>
+              <button type="button" class="quiz-option" data-value="Outra marca">Outra marca</button>
+              <button type="button" class="quiz-option" data-value="Nao sei">Não sei</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Inversor: motivo + potência aproximada -->
+        <div id="capInverter" style="display:none;">
+          <div class="quiz-field">
+            <label>Porque precisa de trocar/adicionar o inversor?</label>
+            <div class="quiz-options" data-field="inverter_reason">
+              <button type="button" class="quiz-option" data-value="Avariado">O atual avariou</button>
+              <button type="button" class="quiz-option" data-value="Mais potencia">Quero mais potência</button>
+              <button type="button" class="quiz-option" data-value="Instalacao de raiz">Estou a instalar de raiz</button>
+              <button type="button" class="quiz-option" data-value="Outro motivo">Outro motivo</button>
+            </div>
+          </div>
+          <div class="quiz-field">
+            <label>Potência aproximada do sistema</label>
+            <div class="quiz-options" data-field="inverter_power">
+              <button type="button" class="quiz-option" data-value="Ate 3kW">Até 3 kW</button>
+              <button type="button" class="quiz-option" data-value="3-5kW">3–5 kW</button>
+              <button type="button" class="quiz-option" data-value="Mais de 5kW">Mais de 5 kW</button>
+              <button type="button" class="quiz-option" data-value="Nao sei">Não sei</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Carregador EV: tipo + já tem solar -->
+        <div id="capCharger" style="display:none;">
+          <div class="quiz-field">
+            <label>Que tipo de carregamento procura?</label>
+            <div class="quiz-options quiz-options-list" data-field="charger_type">
+              <button type="button" class="quiz-option" data-value="Mais economico (7kW monofasico)">🔌 Mais económico — 7 kW monofásico</button>
+              <button type="button" class="quiz-option" data-value="Mais rapido (11kW trifasico)">⚡ Mais rápido — 11 kW trifásico</button>
+              <button type="button" class="quiz-option" data-value="O mais rapido e inteligente (22kW com app)">🚀 O mais rápido e inteligente — 22 kW com app</button>
+              <button type="button" class="quiz-option" data-value="Nao sei">🤔 Não sei</button>
+            </div>
+          </div>
+          <div class="quiz-field">
+            <label>Já tem sistema solar instalado?</label>
+            <div class="quiz-options" data-field="charger_has_solar">
+              <button type="button" class="quiz-option" data-value="Sim">Sim</button>
+              <button type="button" class="quiz-option" data-value="Nao">Não</button>
+              <button type="button" class="quiz-option" data-value="Vou instalar agora">Vou instalar agora</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Estrutura: cobertura + nº de painéis -->
+        <div id="capStructure" style="display:none;">
+          <div class="quiz-field">
+            <label>Tipo de cobertura</label>
+            <div class="quiz-options" data-field="structure_roof_type">
+              <button type="button" class="quiz-option" data-value="Telhado inclinado">Telhado inclinado</button>
+              <button type="button" class="quiz-option" data-value="Cobertura plana">Cobertura plana</button>
+              <button type="button" class="quiz-option" data-value="Nao sei">Não sei</button>
+            </div>
+          </div>
+          <div class="quiz-field">
+            <label>Quantos painéis pretende instalar?</label>
+            <div class="quiz-options" data-field="structure_panel_count">
+              <button type="button" class="quiz-option" data-value="1-6">1–6</button>
+              <button type="button" class="quiz-option" data-value="7-12">7–12</button>
+              <button type="button" class="quiz-option" data-value="13-20">13–20</button>
+              <button type="button" class="quiz-option" data-value="Mais de 20">Mais de 20</button>
             </div>
           </div>
         </div>
