@@ -1,4 +1,4 @@
-// Tailored lead-qualification quiz — Decisão Ponderada
+// Tailored lead-qualification quiz — Lumanova Energia
 // Step 2 asks what the lead needs mapped 1:1 to the real product catalog. Step 3
 // asks a couple of professional, strategic qualifying questions per category —
 // consumption pattern and critical-load autonomy needs, not appliance counts.
