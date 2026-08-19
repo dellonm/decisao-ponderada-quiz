@@ -473,7 +473,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('slotRetry').addEventListener('click', loadSlots);
 
-  form.addEventListener('submit', async (e) => {
+  // The booking webhook (email, calendar invite, CRM write, Slack ping) is
+  // deliberately NOT called here. We hand the answers to obrigado.html via
+  // sessionStorage and navigate there immediately, so the visitor sees the
+  // confirmation + "what happens next" instructions right away. obrigado.js
+  // fires the actual booking call once that page has loaded.
+  form.addEventListener('submit', (e) => {
     e.preventDefault();
     answers.name = document.getElementById('qname').value.trim();
     answers.phone = document.getElementById('qphone').value.trim();
@@ -496,42 +501,7 @@ document.addEventListener('DOMContentLoaded', () => {
     submitBtn.disabled = true;
     submitBtn.textContent = 'A agendar...';
 
-    try {
-      const res = await fetch(QUIZ_WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(answers)
-      });
-      const result = await res.json().catch(() => ({}));
-
-      if (result.status === 'conflict') {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Agendar a Minha Chamada →';
-        answers.scheduled_slot = null;
-        answers.scheduled_slot_label = '';
-        slotSelectedLabel.style.display = 'none';
-        slotError.style.display = 'block';
-        slotError.innerHTML = 'Esse horário acabou de ficar indisponível. Escolha outro abaixo. <button type="button" class="link-btn" id="slotRetry2">Atualizar horários</button>';
-        document.getElementById('slotRetry2').addEventListener('click', loadSlots);
-        loadSlots();
-        window.scrollTo({ top: form.offsetTop - 100, behavior: 'smooth' });
-        return;
-      }
-
-      const redirectParams = new URLSearchParams({
-        slot: result.scheduledSlot || '',
-        meet: result.meetLink || '',
-        label: answers.scheduled_slot_label || '',
-        email: answers.email || ''
-      });
-      window.location.href = 'obrigado.html?' + redirectParams.toString();
-      return;
-    } catch (err) {
-      console.error('Quiz submission error:', err);
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Agendar a Minha Chamada →';
-      slotError.style.display = 'block';
-      slotError.innerHTML = 'Não foi possível agendar agora. Verifique a ligação à internet e tente novamente.';
-    }
+    sessionStorage.setItem('luminova_booking_answers', JSON.stringify(answers));
+    window.location.href = 'obrigado.html';
   });
 });

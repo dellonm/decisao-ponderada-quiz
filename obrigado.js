@@ -1,5 +1,11 @@
-// Standalone "thank you" page — receives the booking result via query params
-// from quiz.js so this page never has to call the backend itself.
+// Confirmation page — this is where the booking actually happens.
+// quiz.js hands off the answers via sessionStorage and navigates here
+// immediately on submit, so the visitor sees the confirmation + "what
+// happens next" instructions right away. Only once THIS page has loaded
+// do we call the n8n webhook, which sends the email, creates the calendar
+// invite, starts the reminder sequence, writes the CRM row, and pings Slack.
+
+const QUIZ_WEBHOOK_URL = "https://backend.automationbig8agency.com/webhook/decisao-ponderada-quiz";
 
 document.getElementById('year').textContent = new Date().getFullYear();
 
@@ -48,26 +54,56 @@ function buildCalendarButtonsHtml(scheduledSlotIso, meetLink) {
   `;
 }
 
-const params = new URLSearchParams(window.location.search);
-const slot = params.get('slot');
-const meet = params.get('meet') || '';
-const label = params.get('label') || '';
-const email = params.get('email') || '';
-
 const successMsg = document.getElementById('successMessage');
-if (!slot) {
+const nextSteps = document.getElementById('nextSteps');
+
+const stored = sessionStorage.getItem('luminova_booking_answers');
+sessionStorage.removeItem('luminova_booking_answers');
+
+let answers = null;
+try { answers = stored ? JSON.parse(stored) : null; } catch (err) { answers = null; }
+
+if (!answers) {
   // Someone landed here directly without a booking — don't show a broken/empty state.
   successMsg.innerHTML = 'Não encontrámos os detalhes da sua chamada nesta página. Se já agendou, verifique o seu email — se ainda não agendou, <a href="index.html">volte ao início</a> para marcar.';
-  document.getElementById('nextSteps').style.display = 'none';
-} else if (meet) {
-  successMsg.innerHTML = `A sua chamada está confirmada para <strong>${label}</strong>. Enviámos o convite (com o link do Google Meet) para <strong>${email}</strong>.`;
+  nextSteps.style.display = 'none';
 } else {
-  successMsg.innerHTML = `Obrigado! A sua chamada ficou registada para <strong>${label}</strong>. Um elemento da nossa equipa confirma consigo em breve.`;
-}
+  // successMessage already shows "A confirmar os detalhes..." as its default HTML.
+  fetch(QUIZ_WEBHOOK_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(answers)
+  })
+    .then(async (res) => {
+      const result = await res.json().catch(() => ({}));
 
-if (slot) {
-  document.getElementById('spamNote').style.display = 'block';
-  const calActions = document.getElementById('calActions');
-  calActions.style.display = 'flex';
-  calActions.innerHTML = buildCalendarButtonsHtml(slot, meet);
+      if (!res.ok || result.status === 'conflict') {
+        successMsg.innerHTML = 'Esse horário acabou de ficar indisponível ou não foi possível confirmar. <a href="index.html">Escolha outro horário</a> ou ligue-nos diretamente.';
+        nextSteps.style.display = 'none';
+        return;
+      }
+
+      const slot = result.scheduledSlot || answers.scheduled_slot;
+      const meet = result.meetLink || '';
+      const label = answers.scheduled_slot_label || '';
+      const email = answers.email || '';
+
+      if (meet) {
+        successMsg.innerHTML = `A sua chamada está confirmada para <strong>${label}</strong>. Enviámos o convite (com o link do Google Meet) para <strong>${email}</strong>.`;
+      } else {
+        successMsg.innerHTML = `Obrigado! A sua chamada ficou registada para <strong>${label}</strong>. Um elemento da nossa equipa confirma consigo em breve.`;
+      }
+
+      if (slot) {
+        document.getElementById('spamNote').style.display = 'block';
+        const calActions = document.getElementById('calActions');
+        calActions.style.display = 'flex';
+        calActions.innerHTML = buildCalendarButtonsHtml(slot, meet);
+      }
+    })
+    .catch((err) => {
+      console.error('Booking confirmation error:', err);
+      successMsg.innerHTML = 'Não foi possível confirmar a sua chamada agora. Contacte-nos por telefone (918 675 150) e confirmamos consigo diretamente.';
+      nextSteps.style.display = 'none';
+    });
 }
