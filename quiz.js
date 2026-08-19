@@ -506,6 +506,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderSlotGrid();
         slotSelectedLabel.style.display = 'block';
         slotSelectedLabel.textContent = `Selecionado: ${answers.scheduled_slot_label}`;
+        slotError.style.display = 'none';
       });
       slotGrid.appendChild(btn);
     });
@@ -519,11 +520,16 @@ document.addEventListener('DOMContentLoaded', () => {
     answers.phone = document.getElementById('qphone').value.trim();
     answers.email = document.getElementById('qemail').value.trim();
 
-    if (!answers.name || !answers.phone || !answers.email || !answers.scheduled_slot) {
-      if (!answers.scheduled_slot) {
-        slotPicker.classList.add('shake');
-        setTimeout(() => slotPicker.classList.remove('shake'), 400);
-      }
+    if (!answers.scheduled_slot) {
+      slotPicker.classList.add('shake');
+      setTimeout(() => slotPicker.classList.remove('shake'), 400);
+      slotError.style.display = 'block';
+      slotError.innerHTML = '⬆️ Por favor selecione um horário acima antes de agendar a sua chamada.';
+      slotPicker.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    if (!answers.name || !answers.phone || !answers.email) {
       return;
     }
 
