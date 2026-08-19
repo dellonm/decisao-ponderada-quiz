@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chamada Agendada | Luminova Energia</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>☀️</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="grain"></div>
+<div class="cursor-glow" id="cursorGlow"></div>
+
+<header class="quiz-header">
+  <div class="container quiz-header-inner">
+    <span class="logo">
+      <img src="assets/logo-mark.png" alt="Luminova Energia" class="logo-mark-img">
+      <span class="logo-text">Luminova<em>Energia</em></span>
+    </span>
+    <a href="tel:+351918675150" class="quiz-header-phone">📞 918 675 150</a>
+  </div>
+</header>
+
+<section class="quiz-section">
+  <div class="container quiz-container">
+
+    <div class="quiz-success" id="quizSuccess">
+      <div class="quiz-success-icon">✓</div>
+      <h2>Chamada agendada!</h2>
+      <p id="successMessage">A confirmar os detalhes...</p>
+
+      <div class="quiz-next-steps" id="nextSteps">
+        <h3>O que acontece a seguir</h3>
+        <ol>
+          <li><strong>Agora:</strong> Enviámos um convite por email (com o link do Google Meet) para o horário que escolheu.</li>
+          <li><strong>Antes da chamada:</strong> Vai receber alguns emails nossos com informação útil para chegar mais preparado(a) — não é spam.</li>
+          <li><strong>Na chamada:</strong> Um elemento da nossa equipa avalia o seu caso e esclarece dúvidas. Se fizer sentido avançar, marcamos também a visita técnica gratuita ao local.</li>
+        </ol>
+      </div>
+
+      <p class="quiz-spam-note" id="spamNote" style="display:none;">📩 Não encontra o email? Verifique a pasta de <strong>Spam / Não Solicitado</strong> — o convite chega em nome de <strong>Luminova Energia</strong>.</p>
+      <div class="quiz-cal-actions" id="calActions" style="display:none;"></div>
+
+      <div class="quiz-urgency" style="margin-top:24px;">
+        <span class="pulse-dot"></span>
+        Guarde o telemóvel e o email por perto — é assim que vamos marcar a sua chamada.
+      </div>
+
+      <a href="https://hyperscaleh.github.io/luminova-energia/" class="btn btn-ghost" style="margin-top:28px;" id="backHome">← Voltar ao site</a>
+    </div>
+
+  </div>
+</section>
+
+<footer class="quiz-footer">
+  <div class="container quiz-footer-inner">
+    <span>© <span id="year"></span> Luminova Energia</span>
+    <span class="quiz-footer-sep">·</span>
+    <span>Registo nº 143793</span>
+    <span class="quiz-footer-sep">·</span>
+    <span>Certificado Casa Eficiente 2020</span>
+  </div>
+</footer>
+
+<script src="obrigado.js"></script>
+</body>
+</html>

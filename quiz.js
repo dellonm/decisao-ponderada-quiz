@@ -8,46 +8,6 @@
 const QUIZ_WEBHOOK_URL = "https://backend.automationbig8agency.com/webhook/decisao-ponderada-quiz";
 const AVAILABILITY_URL = "https://backend.automationbig8agency.com/webhook/luminova-availability";
 
-// ---- "Add to calendar" links for the success screen — a manual backup in case the
-// Google Calendar invite email never surfaces (spam filters, wrong inbox, etc). ----
-function toUtcCompact(dateObj) {
-  return dateObj.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-}
-
-function buildCalendarButtonsHtml(scheduledSlotIso, meetLink) {
-  const start = new Date(scheduledSlotIso);
-  const end = new Date(start.getTime() + 30 * 60 * 1000);
-  const title = 'Chamada de Avaliação — Luminova Energia';
-  const details = meetLink
-    ? `Chamada de avaliação solar com a Luminova Energia.\\n\\nEntrar na chamada: ${meetLink}`
-    : 'Chamada de avaliação solar com a Luminova Energia.';
-  const location = meetLink || '';
-
-  const googleUrl = 'https://calendar.google.com/calendar/render?action=TEMPLATE'
-    + '&text=' + encodeURIComponent(title)
-    + '&dates=' + toUtcCompact(start) + '/' + toUtcCompact(end)
-    + '&details=' + encodeURIComponent(details)
-    + '&location=' + encodeURIComponent(location);
-
-  const icsBody = [
-    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Luminova Energia//Quiz//PT', 'BEGIN:VEVENT',
-    'UID:' + Date.now() + '@luminovaenergia',
-    'DTSTAMP:' + toUtcCompact(new Date()),
-    'DTSTART:' + toUtcCompact(start),
-    'DTEND:' + toUtcCompact(end),
-    'SUMMARY:' + title,
-    'DESCRIPTION:' + details.replace(/\n/g, '\\n'),
-    'LOCATION:' + location,
-    'END:VEVENT', 'END:VCALENDAR'
-  ].join('\r\n');
-  const icsUrl = 'data:text/calendar;charset=utf8,' + encodeURIComponent(icsBody);
-
-  return `
-    <a href="${googleUrl}" target="_blank" rel="noopener" class="btn btn-ghost">📅 Adicionar ao Google Calendar</a>
-    <a href="${icsUrl}" download="chamada-luminova-energia.ics" class="btn btn-ghost">⬇️ Descarregar .ics (Outlook / Apple)</a>
-  `;
-}
-
 // Cursor glow (kept from the main site's visual language)
 const glow = document.getElementById('cursorGlow');
 if (glow) {
@@ -126,7 +86,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const intro = document.getElementById('quizIntro');
   const form = document.getElementById('quizForm');
-  const success = document.getElementById('quizSuccess');
   const startBtn = document.getElementById('startQuiz');
   const backBtn = document.getElementById('quizBack');
   const progressFill = document.getElementById('progressFill');
@@ -559,28 +518,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      const successMsg = document.getElementById('successMessage');
-      if (successMsg) {
-        if (result.meetLink) {
-          successMsg.innerHTML = `A sua chamada está confirmada para <strong>${answers.scheduled_slot_label}</strong>. Enviámos o convite (com o link do Google Meet) para <strong>${answers.email}</strong>.`;
-        } else {
-          successMsg.innerHTML = `Obrigado! A sua chamada ficou registada para <strong>${answers.scheduled_slot_label}</strong>. Um elemento da nossa equipa confirma consigo em breve.`;
-        }
-      }
-
-      const spamNote = document.getElementById('spamNote');
-      const calActions = document.getElementById('calActions');
-      if (result.scheduledSlot) {
-        if (spamNote) spamNote.style.display = 'block';
-        if (calActions) {
-          calActions.style.display = 'flex';
-          calActions.innerHTML = buildCalendarButtonsHtml(result.scheduledSlot, result.meetLink);
-        }
-      }
-
-      form.style.display = 'none';
-      success.style.display = 'block';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      const redirectParams = new URLSearchParams({
+        slot: result.scheduledSlot || '',
+        meet: result.meetLink || '',
+        label: answers.scheduled_slot_label || '',
+        email: answers.email || ''
+      });
+      window.location.href = 'obrigado.html?' + redirectParams.toString();
+      return;
     } catch (err) {
       console.error('Quiz submission error:', err);
       submitBtn.disabled = false;
