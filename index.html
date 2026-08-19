@@ -356,12 +356,13 @@
         <h2>Falta só uma coisa — vamos agendar a sua chamada de avaliação</h2>
         <p class="quiz-step-sub">Um elemento da nossa equipa liga-lhe para confirmar os detalhes e, se fizer sentido avançar, marcamos também a visita técnica ao local.</p>
         <div class="quiz-field">
-          <label>Quando prefere receber a nossa chamada?</label>
-          <div class="quiz-options quiz-options-list" data-field="call_preference">
-            <button type="button" class="quiz-option" data-value="Manha">🌅 Manhã (9h–13h)</button>
-            <button type="button" class="quiz-option" data-value="Tarde">🌤️ Tarde (14h–18h)</button>
-            <button type="button" class="quiz-option" data-value="Fim do dia">🌙 Fim do dia (18h–20h)</button>
-            <button type="button" class="quiz-option" data-value="Qualquer altura">🕐 Qualquer altura</button>
+          <label>Escolha o dia e a hora da sua chamada</label>
+          <div class="slot-picker" id="slotPicker">
+            <p class="slot-status" id="slotLoading">A carregar horários disponíveis...</p>
+            <p class="slot-status slot-status-error" id="slotError" style="display:none;">Não foi possível carregar os horários agora. <button type="button" class="link-btn" id="slotRetry">Tentar novamente</button></p>
+            <div class="slot-day-tabs" id="slotDayTabs" style="display:none;"></div>
+            <div class="slot-grid" id="slotGrid"></div>
+            <p class="slot-selected" id="slotSelectedLabel" style="display:none;"></p>
           </div>
         </div>
         <div class="quiz-field">

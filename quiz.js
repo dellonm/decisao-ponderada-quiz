@@ -6,6 +6,7 @@
 // bands server-side and writes to the Notion CRM.
 
 const QUIZ_WEBHOOK_URL = "https://backend.automationbig8agency.com/webhook/decisao-ponderada-quiz";
+const AVAILABILITY_URL = "https://backend.automationbig8agency.com/webhook/luminova-availability";
 
 // Cursor glow (kept from the main site's visual language)
 const glow = document.getElementById('cursorGlow');
@@ -122,8 +123,8 @@ document.addEventListener('DOMContentLoaded', () => {
     owner: null,
     motivations: [],
     note: '',
-    call_preference: null,
-    wants_call: true,
+    scheduled_slot: null,
+    scheduled_slot_label: '',
     name: '',
     phone: '',
     email: '',
@@ -145,6 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (n === 2) setupInterestStep();
     if (n === 3) setupCapacityStep();
     if (n === 6) setupPriceReveal();
+    if (n === 11) loadSlots();
   }
 
   // Single-select steps auto-advance after a short delay so the user sees their
@@ -393,43 +395,142 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // ---- Step 11: Calendly-style rolling slot picker ----
+  const slotLoading = document.getElementById('slotLoading');
+  const slotError = document.getElementById('slotError');
+  const slotDayTabs = document.getElementById('slotDayTabs');
+  const slotGrid = document.getElementById('slotGrid');
+  const slotSelectedLabel = document.getElementById('slotSelectedLabel');
+  const slotPicker = document.getElementById('slotPicker');
+  let availability = null;
+  let activeDayIndex = 0;
+
+  async function loadSlots() {
+    slotLoading.style.display = 'block';
+    slotError.style.display = 'none';
+    slotDayTabs.style.display = 'none';
+    slotGrid.innerHTML = '';
+    slotSelectedLabel.style.display = 'none';
+    try {
+      const res = await fetch(AVAILABILITY_URL);
+      if (!res.ok) throw new Error('bad status');
+      const data = await res.json();
+      availability = (data && Array.isArray(data.days)) ? data.days : [];
+      slotLoading.style.display = 'none';
+      if (availability.length === 0) {
+        slotGrid.innerHTML = '<p class="slot-none">Sem horários disponíveis de momento. Ligue-nos diretamente.</p>';
+        return;
+      }
+      activeDayIndex = 0;
+      renderDayTabs();
+      renderSlotGrid();
+    } catch (err) {
+      console.error('Availability load error:', err);
+      slotLoading.style.display = 'none';
+      slotError.style.display = 'block';
+    }
+  }
+
+  function renderDayTabs() {
+    slotDayTabs.style.display = 'flex';
+    slotDayTabs.innerHTML = '';
+    availability.forEach((day, i) => {
+      const tab = document.createElement('button');
+      tab.type = 'button';
+      tab.className = 'slot-day-tab' + (i === activeDayIndex ? ' active' : '');
+      tab.innerHTML = `<span class="slot-day-name">${day.dayLabel}</span><span class="slot-day-date">${day.dateLabel}</span>`;
+      tab.addEventListener('click', () => {
+        activeDayIndex = i;
+        renderDayTabs();
+        renderSlotGrid();
+      });
+      slotDayTabs.appendChild(tab);
+    });
+  }
+
+  function renderSlotGrid() {
+    slotGrid.innerHTML = '';
+    const day = availability[activeDayIndex];
+    if (!day || day.slots.length === 0) {
+      slotGrid.innerHTML = '<p class="slot-none">Sem horários neste dia.</p>';
+      return;
+    }
+    day.slots.forEach(slot => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'slot-btn' + (answers.scheduled_slot === slot.start ? ' selected' : '');
+      btn.textContent = slot.label;
+      btn.addEventListener('click', () => {
+        answers.scheduled_slot = slot.start;
+        answers.scheduled_slot_label = `${day.dayLabel}, ${day.dateLabel} às ${slot.label}`;
+        renderSlotGrid();
+        slotSelectedLabel.style.display = 'block';
+        slotSelectedLabel.textContent = `Selecionado: ${answers.scheduled_slot_label}`;
+      });
+      slotGrid.appendChild(btn);
+    });
+  }
+
+  document.getElementById('slotRetry').addEventListener('click', loadSlots);
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     answers.name = document.getElementById('qname').value.trim();
     answers.phone = document.getElementById('qphone').value.trim();
     answers.email = document.getElementById('qemail').value.trim();
 
-    if (!answers.name || !answers.phone || !answers.email || !answers.call_preference) {
-      if (!answers.call_preference) {
-        const callGroup = form.querySelector('[data-field="call_preference"]');
-        callGroup.classList.add('shake');
-        setTimeout(() => callGroup.classList.remove('shake'), 400);
+    if (!answers.name || !answers.phone || !answers.email || !answers.scheduled_slot) {
+      if (!answers.scheduled_slot) {
+        slotPicker.classList.add('shake');
+        setTimeout(() => slotPicker.classList.remove('shake'), 400);
       }
       return;
     }
 
     const submitBtn = document.getElementById('submitQuiz');
     submitBtn.disabled = true;
-    submitBtn.textContent = 'A enviar...';
+    submitBtn.textContent = 'A agendar...';
 
     try {
-      await fetch(QUIZ_WEBHOOK_URL, {
+      const res = await fetch(QUIZ_WEBHOOK_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(answers)
       });
+      const result = await res.json().catch(() => ({}));
+
+      if (result.status === 'conflict') {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Agendar a Minha Chamada →';
+        answers.scheduled_slot = null;
+        answers.scheduled_slot_label = '';
+        slotSelectedLabel.style.display = 'none';
+        slotError.style.display = 'block';
+        slotError.innerHTML = 'Esse horário acabou de ficar indisponível. Escolha outro abaixo. <button type="button" class="link-btn" id="slotRetry2">Atualizar horários</button>';
+        document.getElementById('slotRetry2').addEventListener('click', loadSlots);
+        loadSlots();
+        window.scrollTo({ top: form.offsetTop - 100, behavior: 'smooth' });
+        return;
+      }
+
+      const successMsg = document.getElementById('successMessage');
+      if (successMsg) {
+        if (result.meetLink) {
+          successMsg.innerHTML = `A sua chamada está confirmada para <strong>${answers.scheduled_slot_label}</strong>. Enviámos o convite (com o link do Google Meet) para <strong>${answers.email}</strong> — verifique também o calendário.<br><br><a href="${result.meetLink}" target="_blank" rel="noopener" class="btn btn-primary" style="margin-top:14px;display:inline-block;">Abrir o Google Meet →</a>`;
+        } else {
+          successMsg.innerHTML = `Obrigado! A sua chamada ficou registada para <strong>${answers.scheduled_slot_label}</strong>. Um elemento da nossa equipa confirma consigo em breve.`;
+        }
+      }
+
+      form.style.display = 'none';
+      success.style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
       console.error('Quiz submission error:', err);
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Agendar a Minha Chamada →';
+      slotError.style.display = 'block';
+      slotError.innerHTML = 'Não foi possível agendar agora. Verifique a ligação à internet e tente novamente.';
     }
-
-    const callLabels = { 'Manha': 'manhã', 'Tarde': 'tarde', 'Fim do dia': 'fim do dia', 'Qualquer altura': 'qualquer altura' };
-    const successMsg = document.getElementById('successMessage');
-    if (successMsg) {
-      successMsg.innerHTML = `Obrigado! Um elemento da nossa equipa vai enviar-lhe uma <strong>mensagem</strong> e um <strong>email</strong> durante a ${callLabels[answers.call_preference] || 'próxima janela disponível'} para agendar a chamada de avaliação. Se decidir avançar, marcamos também a visita técnica ao local.`;
-    }
-
-    form.style.display = 'none';
-    success.style.display = 'block';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 });
