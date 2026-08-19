@@ -556,7 +556,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const successMsg = document.getElementById('successMessage');
       if (successMsg) {
         if (result.meetLink) {
-          successMsg.innerHTML = `A sua chamada está confirmada para <strong>${answers.scheduled_slot_label}</strong>. Enviámos o convite (com o link do Google Meet) para <strong>${answers.email}</strong>.<br><br><a href="${result.meetLink}" target="_blank" rel="noopener" class="btn btn-primary" style="margin-top:14px;display:inline-block;">Abrir o Google Meet →</a>`;
+          successMsg.innerHTML = `A sua chamada está confirmada para <strong>${answers.scheduled_slot_label}</strong>. Enviámos o convite (com o link do Google Meet) para <strong>${answers.email}</strong>.`;
         } else {
           successMsg.innerHTML = `Obrigado! A sua chamada ficou registada para <strong>${answers.scheduled_slot_label}</strong>. Um elemento da nossa equipa confirma consigo em breve.`;
         }
