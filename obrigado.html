@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Chamada Agendada | Luminova Energia</title>
+<title>Pedido Recebido | Luminova Energia</title>
 <meta name="robots" content="noindex">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>☀️</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=2">
+<link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
 
@@ -31,24 +31,32 @@
 
     <div class="quiz-success" id="quizSuccess">
       <div class="quiz-success-icon">✓</div>
-      <h2>Chamada agendada!</h2>
+      <h2>Pedido recebido!</h2>
       <p id="successMessage">A confirmar os detalhes...</p>
+
+      <div class="marta-call-card" style="max-width:460px;margin:28px auto 0;text-align:left;">
+        <img src="assets/marta.jpg" alt="Marta - Assistente da Luminova" class="marta-call-photo">
+        <div class="marta-call-info">
+          <strong class="marta-call-name">Marta — Assistente da Luminova</strong>
+          <span class="marta-call-desc">Vai receber uma chamada de <strong>+351 300 602 521</strong> dentro de cerca de 2 minutos.</span>
+        </div>
+      </div>
 
       <div class="quiz-next-steps" id="nextSteps">
         <h3>O que acontece a seguir</h3>
         <ol>
-          <li><strong>Agora:</strong> Enviámos um convite por email (com o link do Google Meet) para o horário que escolheu.</li>
-          <li><strong>Antes da chamada:</strong> Vai receber alguns emails nossos com informação útil para chegar mais preparado(a) — não é spam.</li>
-          <li><strong>Na chamada:</strong> Um elemento da nossa equipa avalia o seu caso e esclarece dúvidas. Se fizer sentido avançar, marcamos também a visita técnica gratuita ao local.</li>
+          <li><strong>Dentro de 2 minutos:</strong> A Marta liga-lhe do número acima para perceber melhor o seu pedido.</li>
+          <li><strong>Na chamada:</strong> Ela confirma os detalhes e agenda consigo a chamada de avaliação com a nossa equipa, hoje ou amanhã.</li>
+          <li><strong>Depois de agendado:</strong> Recebe um convite por email com o link da chamada, mais alguns emails úteis antes da hora marcada — não é spam.</li>
         </ol>
       </div>
 
-      <p class="quiz-spam-note" id="spamNote" style="display:none;">📩 Não encontra o email? Verifique a pasta de <strong>Spam / Não Solicitado</strong> — o convite chega em nome de <strong>Luminova Energia</strong>.</p>
+      <p class="quiz-spam-note" id="spamNote" style="display:none;">📩 Não encontra o email? Verifique a pasta de <strong>Spam / Não Solicitado</strong> — chega em nome de <strong>Luminova Energia</strong>.</p>
       <div class="quiz-cal-actions" id="calActions" style="display:none;"></div>
 
       <div class="quiz-urgency" style="margin-top:24px;">
         <span class="pulse-dot"></span>
-        Guarde o telemóvel e o email por perto — é assim que vamos marcar a sua chamada.
+        Mantenha o telemóvel por perto — a chamada é já a seguir.
       </div>
 
       <a href="https://hyperscaleh.github.io/luminova-energia/" class="btn btn-ghost" style="margin-top:28px;" id="backHome">← Voltar ao site</a>
@@ -67,6 +75,6 @@
   </div>
 </footer>
 
-<script src="obrigado.js?v=3"></script>
+<script src="obrigado.js?v=4"></script>
 </body>
 </html>

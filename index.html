@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=2">
+<link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
 
@@ -353,16 +353,13 @@
 
       <!-- Step 11: Chamada + Contacto -->
       <div class="quiz-step" data-step="11">
-        <h2>Falta só uma coisa — vamos agendar a sua chamada de avaliação</h2>
-        <p class="quiz-step-sub">Um elemento da nossa equipa liga-lhe para confirmar os detalhes e, se fizer sentido avançar, marcamos também a visita técnica ao local.</p>
-        <div class="quiz-field">
-          <label>Escolha o dia e a hora da sua chamada</label>
-          <div class="slot-picker" id="slotPicker">
-            <p class="slot-status" id="slotLoading">A carregar horários disponíveis...</p>
-            <p class="slot-status slot-status-error" id="slotError" style="display:none;">Não foi possível carregar os horários agora. <button type="button" class="link-btn" id="slotRetry">Tentar novamente</button></p>
-            <div class="slot-day-tabs" id="slotDayTabs" style="display:none;"></div>
-            <div class="slot-grid" id="slotGrid"></div>
-            <p class="slot-selected" id="slotSelectedLabel" style="display:none;"></p>
+        <h2>Falta só uma coisa — a Marta vai ligar-lhe</h2>
+        <p class="quiz-step-sub">Preencha os seus dados e a nossa assistente entra em contacto consigo em poucos minutos para perceber o seu pedido e agendar a visita técnica.</p>
+        <div class="marta-call-card">
+          <img src="assets/marta.jpg" alt="Marta - Assistente da Luminova" class="marta-call-photo">
+          <div class="marta-call-info">
+            <strong class="marta-call-name">Marta — Assistente da Luminova</strong>
+            <span class="marta-call-desc">Vai receber uma chamada de <strong>+351 300 602 521</strong> dentro de cerca de 2 minutos depois de submeter o formulário.</span>
           </div>
         </div>
         <div class="quiz-field">
@@ -377,7 +374,7 @@
           <label for="qemail">Email</label>
           <input type="email" id="qemail" name="email" placeholder="oseuemail@exemplo.pt" required>
         </div>
-        <button type="submit" class="btn btn-primary btn-lg full" id="submitQuiz">Agendar a Minha Chamada →</button>
+        <button type="submit" class="btn btn-primary btn-lg full" id="submitQuiz">Concluir e Receber a Chamada →</button>
         <p class="quiz-disclaimer">Ao submeter, aceita ser contactado pela nossa equipa (mensagem, email ou chamada) sobre este pedido.</p>
       </div>
 
@@ -399,6 +396,6 @@
   </div>
 </footer>
 
-<script src="quiz.js?v=3"></script>
+<script src="quiz.js?v=4"></script>
 </body>
 </html>

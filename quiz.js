@@ -6,7 +6,6 @@
 // bands server-side and writes to the Notion CRM.
 
 const QUIZ_WEBHOOK_URL = "https://backend.automationbig8agency.com/webhook/decisao-ponderada-quiz";
-const AVAILABILITY_URL = "https://backend.automationbig8agency.com/webhook/luminova-availability";
 
 // Cursor glow (kept from the main site's visual language)
 const glow = document.getElementById('cursorGlow');
@@ -394,104 +393,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // ---- Step 11: Calendly-style rolling slot picker ----
-  const slotLoading = document.getElementById('slotLoading');
-  const slotError = document.getElementById('slotError');
-  const slotDayTabs = document.getElementById('slotDayTabs');
-  const slotGrid = document.getElementById('slotGrid');
-  const slotSelectedLabel = document.getElementById('slotSelectedLabel');
-  const slotPicker = document.getElementById('slotPicker');
-  let availability = null;
-  let activeDayIndex = 0;
+  // Marta (the AI voice agent) calls the lead directly a couple of minutes
+  // after submit — there's no self-serve slot picker anymore, so no
+  // availability fetch is needed on this step.
 
-  async function loadSlots() {
-    slotLoading.style.display = 'block';
-    slotError.style.display = 'none';
-    slotDayTabs.style.display = 'none';
-    slotGrid.innerHTML = '';
-    slotSelectedLabel.style.display = 'none';
-    try {
-      const res = await fetch(AVAILABILITY_URL);
-      if (!res.ok) throw new Error('bad status');
-      const data = await res.json();
-      availability = (data && Array.isArray(data.days)) ? data.days : [];
-      slotLoading.style.display = 'none';
-      if (availability.length === 0) {
-        slotGrid.innerHTML = '<p class="slot-none">Sem horários disponíveis de momento. Ligue-nos diretamente.</p>';
-        return;
-      }
-      activeDayIndex = 0;
-      renderDayTabs();
-      renderSlotGrid();
-    } catch (err) {
-      console.error('Availability load error:', err);
-      slotLoading.style.display = 'none';
-      slotError.style.display = 'block';
-    }
-  }
-
-  function renderDayTabs() {
-    slotDayTabs.style.display = 'flex';
-    slotDayTabs.innerHTML = '';
-    availability.forEach((day, i) => {
-      const tab = document.createElement('button');
-      tab.type = 'button';
-      tab.className = 'slot-day-tab' + (i === activeDayIndex ? ' active' : '');
-      tab.innerHTML = `<span class="slot-day-name">${day.dayLabel}</span><span class="slot-day-date">${day.dateLabel}</span>`;
-      tab.addEventListener('click', () => {
-        activeDayIndex = i;
-        renderDayTabs();
-        renderSlotGrid();
-      });
-      slotDayTabs.appendChild(tab);
-    });
-  }
-
-  function renderSlotGrid() {
-    slotGrid.innerHTML = '';
-    const day = availability[activeDayIndex];
-    if (!day || day.slots.length === 0) {
-      slotGrid.innerHTML = '<p class="slot-none">Sem horários neste dia.</p>';
-      return;
-    }
-    day.slots.forEach(slot => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'slot-btn' + (answers.scheduled_slot === slot.start ? ' selected' : '');
-      btn.textContent = slot.label;
-      btn.addEventListener('click', () => {
-        answers.scheduled_slot = slot.start;
-        answers.scheduled_slot_label = `${day.dayLabel}, ${day.dateLabel} às ${slot.label}`;
-        renderSlotGrid();
-        slotSelectedLabel.style.display = 'block';
-        slotSelectedLabel.textContent = `Selecionado: ${answers.scheduled_slot_label}`;
-        slotError.style.display = 'none';
-      });
-      slotGrid.appendChild(btn);
-    });
-  }
-
-  document.getElementById('slotRetry').addEventListener('click', loadSlots);
-
-  // The booking webhook (email, calendar invite, CRM write, Slack ping) is
-  // deliberately NOT called here. We hand the answers to obrigado.html via
-  // sessionStorage and navigate there immediately, so the visitor sees the
-  // confirmation + "what happens next" instructions right away. obrigado.js
-  // fires the actual booking call once that page has loaded.
+  // The booking webhook (CRM write, Slack ping) is deliberately NOT called
+  // here. We hand the answers to obrigado.html via sessionStorage and
+  // navigate there immediately, so the visitor sees the confirmation
+  // right away. obrigado.js fires the actual webhook once that page has
+  // loaded.
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     answers.name = document.getElementById('qname').value.trim();
     answers.phone = document.getElementById('qphone').value.trim();
     answers.email = document.getElementById('qemail').value.trim();
-
-    if (!answers.scheduled_slot) {
-      slotPicker.classList.add('shake');
-      setTimeout(() => slotPicker.classList.remove('shake'), 400);
-      slotError.style.display = 'block';
-      slotError.innerHTML = '⬆️ Por favor selecione um horário acima antes de agendar a sua chamada.';
-      slotPicker.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      return;
-    }
 
     if (!answers.name || !answers.phone || !answers.email) {
       return;
@@ -499,7 +414,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const submitBtn = document.getElementById('submitQuiz');
     submitBtn.disabled = true;
-    submitBtn.textContent = 'A agendar...';
+    submitBtn.textContent = 'A enviar...';
 
     sessionStorage.setItem('luminova_booking_answers', JSON.stringify(answers));
     window.location.href = 'obrigado.html';
